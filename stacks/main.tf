@@ -7,14 +7,25 @@ terraform {
   }
 }
 
-variable "apikey" {}
-variable "endpoint" {}
-variable "workspace" {}
+variable "timeplus_apikey" {
+  type = string
+  sensitive = true
+}
+variable "timeplus_endpoint" {
+  type = string
+}
+variable "timeplus_workspace" {
+  type = string
+}
+variable "livepeer_apikey" {
+  type = string
+  sensitive = true
+}
 
 provider "timeplus" {
-  endpoint  = var.endpoint
-  workspace = var.workspace
-  api_key   = var.apikey
+  endpoint  = var.timeplus_endpoint
+  workspace = var.timeplus_workspace
+  api_key   = var.timeplus_apikey
 }
 
 resource "timeplus_stream" "livepeer_viewership_metrics_kv" {
@@ -140,7 +151,7 @@ resource "timeplus_source" "livepeer" {
   {
     "data_type": "json",
     "interval": "300s",
-    "api_key": "replace_with_your_livepeer_api_key"
+    "api_key": "${ var.livepeer_apikey }"
   }
   EOJ
 }
@@ -515,14 +526,14 @@ resource "timeplus_dashboard" "VideoEngagementMointor" {
         "size": {
           "key": "viewCount",
           "range": [
-            31,
-            55
+            40,
+            60
           ],
           "value": 10
         },
         "updateKey": "version",
         "updateMode": "time",
-        "zoom": 4
+        "zoom": 2
       }
     },
     "viz_content": "WITH geo AS\n  (\n    SELECT \n      country, geohash, sum(viewCount) AS viewCount, emit_version() as version\n    FROM \n      livepeer_viewership_metrics_kv\n    GROUP BY \n      country, geohash\n    ORDER BY \n      country ASC, geohash ASC\n  )\nSELECT \n  geohash_locate(geohash) AS loc, loc[1] as lat, loc[2] as long, country, viewCount, version\nFROM \n  geo",
